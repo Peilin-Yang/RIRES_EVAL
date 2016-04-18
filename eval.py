@@ -2,6 +2,7 @@ import os,sys
 import codecs
 import subprocess
 from subprocess import Popen,PIPE
+import ast
 import argparse
 import json
 
@@ -35,30 +36,57 @@ def replace_and_make(fn):
 
 def run_query(index_path, query_file_path):
     container_index_path = os.path.join(index_folder, os.path.basename(index_path))
-    for qf in os.listdir(query_file_path):
-        container_query_file_path = os.path.join(query_folder, os.path.basename(query_file_path), qf)
+    query_folder_path = os.path.join(query_folder, os.path.basename(query_file_path) )
+    for qf in os.listdir(query_folder_path):
+        container_query_file_path = os.path.join(query_folder_path, qf)
         p = Popen(['./runquery/IndriRunQuery', container_query_file_path, '-index='+container_index_path], 
                 stdout=PIPE, stderr=PIPE)
         stdout, stderr = p.communicate()
         if p.returncode != 0:
             sys.exit(stderr)
-        result_file_path = os.path.join(results_folder, os.path.basename(query_file_path), qf)
+        result_file_path = os.path.join(results_folder, qf)
         with open(result_file_path, 'w') as f:
             f.write(stdout) 
-        #print_debug('Run Query Success!!')
+    #print_debug('Run Query Success!!')
     #return result_file_path
+
+def print_eval_all_avg(performace_dict):
+    all_performances = {}
+    for qid, performace_str in performace_dict.items():
+        for line in performace_str.split('\n'):
+            line = line.strip()
+            if line:
+                row = line.split()
+                evaluation_method = row[0]
+                qid = row[1]
+                try:
+                    performace = ast.literal_eval(row[2])
+                except:
+                    continue
+
+                if evaluation_method not in all_performances:
+                    all_performances[evaluation_method] = []
+                all_performances[evaluation_method].append(performace)
+    json_output = {}
+    for evaluation_method, l in all_performances.items():
+        json_output[evaluation_method] = round(sum(l)/float(len(l)), 4)
+
+    print json.dumps(json_output, indent=2, sort_keys=True)
 
 def eval_results(judgement_file_path):
     container_judgement_file_path = os.path.join(judgment_folder, os.path.basename(judgement_file_path))
     # p = Popen(['./bin/trec_eval', '-q', '-m', 'all_trec', container_judgement_file_path, result_file_path], 
     #         stdout=PIPE, stderr=PIPE)
+    all_performances = {}
     for rp in os.listdir(results_folder):
-        p = Popen(['./bin/trec_eval', container_judgement_file_path, result_file_path], stdout=PIPE, stderr=PIPE)
+        p = Popen(['./bin/trec_eval', container_judgement_file_path, os.path.join(results_folder, rp)], stdout=PIPE, stderr=PIPE)
         stdout, stderr = p.communicate()
         if p.returncode != 0:
             print stderr
             sys.exit(stderr)
-        print stdout
+        #print stdout
+        all_performances[rp] = stdout
+    print_eval_all_avg(all_performances)
     #print_debug('Eval Success!!')
 
 
