@@ -30,39 +30,42 @@ def replace_and_make(fn):
     if p.returncode != 0:
         sys.exit(stderr)
     #print stdout
-    print_debug('Compile Success!!')
+    #print_debug('Compile Success!!')
 
 
 def run_query(index_path, query_file_path):
     container_index_path = os.path.join(index_folder, os.path.basename(index_path))
-    container_query_file_path = os.path.join(query_folder, os.path.basename(query_file_path))
-    p = Popen(['./runquery/IndriRunQuery', container_query_file_path, '-index='+container_index_path], 
-            stdout=PIPE, stderr=PIPE)
-    stdout, stderr = p.communicate()
-    if p.returncode != 0:
-        sys.exit(stderr)
-    result_file_path = os.path.join(results_folder, os.path.basename(query_file_path))
-    with open(result_file_path, 'w') as f:
-        f.write(stdout) 
-    print_debug('Run Query Success!!')
-    return result_file_path
+    for qf in query_file_path:
+        container_query_file_path = os.path.join(query_folder, os.path.basename(query_file_path))
+        p = Popen(['./runquery/IndriRunQuery', container_query_file_path, '-index='+container_index_path], 
+                stdout=PIPE, stderr=PIPE)
+        stdout, stderr = p.communicate()
+        if p.returncode != 0:
+            sys.exit(stderr)
+        result_file_path = os.path.join(results_folder, os.path.basename(query_file_path))
+        with open(result_file_path, 'w') as f:
+            f.write(stdout) 
+        #print_debug('Run Query Success!!')
+    #return result_file_path
 
-def eval_results(judgement_file_path, result_file_path):
+def eval_results(judgement_file_path):
     container_judgement_file_path = os.path.join(judgment_folder, os.path.basename(judgement_file_path))
-    p = Popen(['./bin/trec_eval', '-q', '-m', 'all_trec', container_judgement_file_path, result_file_path], 
-            stdout=PIPE, stderr=PIPE)
-    stdout, stderr = p.communicate()
-    if p.returncode != 0:
-        print stderr
-        sys.exit(stderr)
-    print stdout
+    # p = Popen(['./bin/trec_eval', '-q', '-m', 'all_trec', container_judgement_file_path, result_file_path], 
+    #         stdout=PIPE, stderr=PIPE)
+    for rp in os.listdir(results_folder):
+        p = Popen(['./bin/trec_eval', container_judgement_file_path, result_file_path], stdout=PIPE, stderr=PIPE)
+        stdout, stderr = p.communicate()
+        if p.returncode != 0:
+            print stderr
+            sys.exit(stderr)
+        print stdout
     #print_debug('Eval Success!!')
 
 
 def run_all(function_file_path, index_path, query_file_path, judgement_file_path):
     replace_and_make(function_file_path)
-    result_file_path = run_query(index_path, query_file_path)
-    eval_results(judgement_file_path, result_file_path)
+    run_query(index_path, query_file_path)
+    eval_results(judgement_file_path)
 
 
 if __name__ == '__main__':
