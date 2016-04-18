@@ -35,14 +35,14 @@ def replace_and_make(fn):
 
 def run_query(index_path, query_file_path):
     container_index_path = os.path.join(index_folder, os.path.basename(index_path))
-    for qf in query_file_path:
-        container_query_file_path = os.path.join(query_folder, os.path.basename(query_file_path))
+    for qf in os.listdir(query_file_path):
+        container_query_file_path = os.path.join(query_folder, os.path.basename(query_file_path), qf)
         p = Popen(['./runquery/IndriRunQuery', container_query_file_path, '-index='+container_index_path], 
                 stdout=PIPE, stderr=PIPE)
         stdout, stderr = p.communicate()
         if p.returncode != 0:
             sys.exit(stderr)
-        result_file_path = os.path.join(results_folder, os.path.basename(query_file_path))
+        result_file_path = os.path.join(results_folder, os.path.basename(query_file_path), qf)
         with open(result_file_path, 'w') as f:
             f.write(stdout) 
         #print_debug('Run Query Success!!')
