@@ -41,9 +41,9 @@ def run_query(index_path, query_file_path, pertube_type='0', pertube_paras_str='
         container_query_file_path = os.path.join(query_folder_path, qf)
         p = Popen(['./runquery/IndriRunQuery', 
                 container_query_file_path, 
-                '-index=%s' % container_index_path], 
+                '-index=%s' % container_index_path, 
                 '-pertube=%s' % pertube_type,
-                '-pertube_paras=%s' % pertube_paras_str,
+                '-pertube_paras=%s' % pertube_paras_str],
                 stdout=PIPE, stderr=PIPE)
         stdout, stderr = p.communicate()
         if p.returncode != 0:
