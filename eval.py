@@ -56,7 +56,11 @@ def run_query(index_path, query_file_path, pertube_type='0', pertube_paras_str='
 
 def print_eval_all_avg(performace_dict):
     all_performances = {}
+    empty_cnt = 0
     for qid, performace_str in performace_dict.items():
+        if not performace_str:
+            empty_cnt += 1
+            continue
         for line in performace_str.split('\n'):
             line = line.strip()
             if line:
@@ -73,7 +77,7 @@ def print_eval_all_avg(performace_dict):
                 all_performances[evaluation_method].append(performace)
     json_output = {}
     for evaluation_method, l in all_performances.items():
-        json_output[evaluation_method] = round(sum(l)/float(len(l)), 4)
+        json_output[evaluation_method] = round(sum(l)/float(len(l)+empty_cnt), 4)
 
     print json.dumps(json_output, indent=2, sort_keys=True)
 
@@ -85,7 +89,7 @@ def eval_results(judgement_file_path):
     for rp in os.listdir(results_folder):
         file_size = os.path.getsize(os.path.join(results_folder, rp))
         if file_size == 0:
-            all_performances[rp] = 0
+            all_performances[rp] = None
             continue
         p = Popen(['./bin/trec_eval', container_judgement_file_path, os.path.join(results_folder, rp)], stdout=PIPE, stderr=PIPE)
         stdout, stderr = p.communicate()
