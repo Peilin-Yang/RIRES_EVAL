@@ -83,6 +83,10 @@ def eval_results(judgement_file_path):
     #         stdout=PIPE, stderr=PIPE)
     all_performances = {}
     for rp in os.listdir(results_folder):
+        file_size = os.path.getsize(os.path.join(results_folder, rp))
+        if file_size == 0:
+            all_performances[rp] = 0
+            continue
         p = Popen(['./bin/trec_eval', container_judgement_file_path, os.path.join(results_folder, rp)], stdout=PIPE, stderr=PIPE)
         stdout, stderr = p.communicate()
         if p.returncode != 0:
